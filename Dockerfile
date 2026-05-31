@@ -30,7 +30,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
       ca-certificates curl wget git xz-utils \
       build-essential gcc-12 g++-12 gcc-12-plugin-dev \
       cmake ninja-build make pkg-config \
-      python3 python3-dev python3-pip python3-setuptools \
+      python3 python3-dev python3-pip python3-venv python3-setuptools \
       automake autoconf libtool bison flex \
       llvm-14 llvm-14-dev llvm-14-tools clang-14 libclang-14-dev lld-14 \
       libgmp-dev libboost-dev libboost-filesystem-dev libboost-thread-dev \
