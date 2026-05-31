@@ -13,7 +13,7 @@ detect() { # $1=label $2=ERE pattern $3=output file
 
 note "tool presence"
 TOOLS="gcc-12 g++-12 clang-14 clang++-14 clang-19 cc c++ gdb gdb-gef gdb-pwndbg
-       gdb-peda lldb-14 rr strace ltrace valgrind heaptrack google-pprof
+       gdb-peda rr strace ltrace valgrind heaptrack google-pprof
        cmake ninja meson bear ccache mold hyperfine
        cppcheck clang-tidy clang-format scan-build include-what-you-use
        ikos ikos-scan infer afl-fuzz afl-cc afl-clang-lto honggfuzz radamsa
