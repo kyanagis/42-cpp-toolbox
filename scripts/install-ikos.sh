@@ -24,6 +24,12 @@ cmake -G Ninja -S "${SRC}" -B "${SRC}/build" \
 cmake --build "${SRC}/build" -j"$(nproc)"
 cmake --install "${SRC}/build"
 
-strip_dir "${PREFIX}"
+strip_dir "${PREFIX}/bin"
+strip_dir "${PREFIX}/lib"
+
+# IKOSのCMakeはvenv作成失敗を無視するためモジュールのimportを検証する。https://github.com/NASA-SW-VnV/ikos/blob/v3.5/analyzer/CMakeLists.txt
+"${PREFIX}/libexec/bin/python" -c "import ikos.analyzer" \
+  || { echo "ERROR: ikos python module missing (venv build failed)" >&2; exit 1; }
+
 rm -rf "${SRC}"
 echo "[ok] ikos ${IKOS_VERSION} -> ${PREFIX}"
