@@ -33,6 +33,15 @@ for t in frama-c cppcheck-htmlreport one_gadget; do
   if command -v "$t" >/dev/null 2>&1; then pass "$t"; else soft "$t (not installed)"; fi
 done
 
+note "toolchain diagnostics"
+clang++ --version 2>&1 | head -1 || true
+echo "  gcc toolchains:   $(ls -d /usr/lib/gcc/x86_64-linux-gnu/* 2>/dev/null | tr '\n' ' ')"
+echo "  libstdc++ headers: $(ls -d /usr/include/c++/* 2>/dev/null | tr '\n' ' ')"
+echo "  asan runtime:     $(ls /usr/lib/llvm-14/lib/clang/*/lib/linux/libclang_rt.asan* 2>/dev/null | head -1)"
+echo "  --- trial: clang++ -std=c++20 -O0 leak.cpp (stderr shown) ---"
+clang++ -std=c++20 -O0 leak.cpp -o /tmp/_diag 2>&1 | head -20 || true
+echo "  trial binary: $(ls -l /tmp/_diag 2>&1 | head -1)"
+
 note "ASan / UBSan — leak.cpp"
 clang++ -std=c++20 -g -O1 -fsanitize=address,undefined leak.cpp -o /tmp/leak 2>/dev/null
 if /tmp/leak 2>&1 | grep -qiE 'heap-buffer-overflow|AddressSanitizer'; then pass "ASan detected overflow/leak"; else miss "ASan detection"; fi
