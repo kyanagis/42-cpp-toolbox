@@ -2,6 +2,12 @@
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 
+# Infer official: https://fbinfer.com/
+# Infer getting started: https://fbinfer.com/docs/getting-started/
+# Infer repo: https://github.com/facebook/infer
+# Infer releases: https://github.com/facebook/infer/releases
+# Infer install docs: https://fbinfer.com/docs/getting-started#install-the-binaries
+
 # Infer1.3.0はglibc>=2.38要求でjammy（2.35）非対応。新しい順に動く版を採る。https://github.com/facebook/infer/releases
 try_install() {
   local ver="$1" asset="$2" dir="$3"
