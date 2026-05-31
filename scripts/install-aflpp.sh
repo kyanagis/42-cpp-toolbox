@@ -2,6 +2,13 @@
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 
+# AFL++ official: https://aflplus.plus/
+# AFL++ repo: https://github.com/AFLplusplus/AFLplusplus
+# AFL++ install guide: https://github.com/AFLplusplus/AFLplusplus/blob/stable/docs/INSTALL.md
+# AFL++ docs index: https://aflplus.plus/docs/
+# AFL++ env vars: https://github.com/AFLplusplus/AFLplusplus/blob/stable/docs/env_variables.md
+# AFL++ best practices: https://github.com/AFLplusplus/AFLplusplus/blob/stable/docs/fuzzing_in_depth.md
+
 AFLPP_VERSION="${AFLPP_VERSION:-v4.40c}"
 PREFIX="${AFLPP_PREFIX:-/opt/aflplusplus}"
 SRC=/tmp/aflpp
