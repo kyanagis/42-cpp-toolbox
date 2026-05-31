@@ -162,6 +162,7 @@ RUN chmod +x /tmp/scripts/install-infer.sh && /tmp/scripts/install-infer.sh
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip3 install --upgrade pip wheel \
  && pip3 install \
+      uv \
       codechecker semgrep cpplint compiledb lizard \
       pwntools ROPgadget capstone
 
