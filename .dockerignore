@@ -1,0 +1,8 @@
+.git
+.github
+*.md
+.hadolint.yaml
+tests
+run.sh
+Makefile
+**/.DS_Store
