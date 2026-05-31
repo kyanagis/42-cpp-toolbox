@@ -7,13 +7,16 @@ set -euo pipefail
 # honggfuzz usage: https://github.com/google/honggfuzz/blob/master/docs/USAGE.md
 # honggfuzz build deps: https://github.com/google/honggfuzz#requirements
 
-HONGGFUZZ_VERSION="${HONGGFUZZ_VERSION:-2.6}"
+# 2.6タグはbinutils2.39のstyled disassembler APIに未対応でビルド不可のためmaster commitに固定。https://github.com/google/honggfuzz/blob/master/linux/bfd.c
+HONGGFUZZ_VERSION="${HONGGFUZZ_VERSION:-48790f7b18f30ba4a95272ea290b720662ed56c9}"
 PREFIX="${HONGGFUZZ_PREFIX:-/opt/honggfuzz}"
 SRC=/tmp/honggfuzz
 
-retry git clone --depth 1 --branch "${HONGGFUZZ_VERSION}" \
-      https://github.com/google/honggfuzz.git "${SRC}" \
-  || retry git clone --depth 1 https://github.com/google/honggfuzz.git "${SRC}"
+rm -rf "${SRC}"
+git init -q "${SRC}"
+git -C "${SRC}" remote add origin https://github.com/google/honggfuzz.git
+retry git -C "${SRC}" fetch --depth 1 origin "${HONGGFUZZ_VERSION}"
+git -C "${SRC}" checkout -q FETCH_HEAD
 
 make -C "${SRC}" -j"$(nproc)"
 make -C "${SRC}" install PREFIX="${PREFIX}"
