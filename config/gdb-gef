@@ -1,0 +1,2 @@
+#!/bin/sh
+exec gdb -nx -ex "source /opt/gef/gef.py" "$@"
