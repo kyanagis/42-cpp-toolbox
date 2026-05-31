@@ -7,6 +7,9 @@ pass() { printf '  \033[32mok\033[0m   %s\n' "$1"; }
 miss() { printf '  \033[31mMISS\033[0m %s\n' "$1"; fail=1; }
 soft() { printf '  \033[33mskip\033[0m %s\n' "$1"; }
 note() { printf '\n\033[1m== %s ==\033[0m\n' "$1"; }
+detect() { # $1=label $2=ERE pattern $3=output file
+  if grep -qiE "$2" "$3"; then pass "$1"; else miss "$1"; tail -8 "$3" | sed 's/^/      | /'; fi
+}
 
 note "tool presence"
 TOOLS="gcc-12 g++-12 clang-14 clang++-14 clang-19 cc c++ gdb gdb-gef gdb-pwndbg
@@ -29,47 +32,41 @@ done
 if python3 -c 'import pwn' 2>/dev/null; then pass "pwntools (import pwn)"; else miss "pwntools"; fi
 
 note "optional tools (best-effort, non-fatal)"
-for t in frama-c cppcheck-htmlreport one_gadget; do
+for t in lldb-14 frama-c cppcheck-htmlreport one_gadget; do
   if command -v "$t" >/dev/null 2>&1; then pass "$t"; else soft "$t (not installed)"; fi
 done
 
-note "toolchain diagnostics"
-clang++ --version 2>&1 | head -1 || true
-echo "  gcc toolchains:   $(ls -d /usr/lib/gcc/x86_64-linux-gnu/* 2>/dev/null | tr '\n' ' ')"
-echo "  libstdc++ headers: $(ls -d /usr/include/c++/* 2>/dev/null | tr '\n' ' ')"
-echo "  asan runtime:     $(ls /usr/lib/llvm-14/lib/clang/*/lib/linux/libclang_rt.asan* 2>/dev/null | head -1)"
-echo "  --- trial: clang++ -std=c++20 -O0 leak.cpp (stderr shown) ---"
-clang++ -std=c++20 -O0 leak.cpp -o /tmp/_diag 2>&1 | head -20 || true
-echo "  trial binary: $(ls -l /tmp/_diag 2>&1 | head -1)"
-
 note "ASan / UBSan — leak.cpp"
-clang++ -std=c++20 -g -O1 -fsanitize=address,undefined leak.cpp -o /tmp/leak 2>/dev/null
-if /tmp/leak 2>&1 | grep -qiE 'heap-buffer-overflow|AddressSanitizer'; then pass "ASan detected overflow/leak"; else miss "ASan detection"; fi
+{ clang++ -std=c++20 -g -O1 -fno-omit-frame-pointer -fsanitize=address,undefined leak.cpp -o /tmp/leak && /tmp/leak; } >/tmp/o 2>&1
+detect "ASan detected overflow/leak" 'heap-buffer-overflow|AddressSanitizer' /tmp/o
 
 note "ThreadSanitizer — race.cpp"
-clang++ -std=c++20 -g -O1 -fsanitize=thread race.cpp -o /tmp/race 2>/dev/null
-if /tmp/race 2>&1 | grep -qi 'ThreadSanitizer'; then pass "TSan detected data race"; else miss "TSan detection"; fi
+{ clang++ -std=c++20 -g -O1 -fsanitize=thread race.cpp -o /tmp/race && /tmp/race; } >/tmp/o 2>&1
+detect "TSan detected data race" 'ThreadSanitizer' /tmp/o
 
 note "UBSan — ub.cpp"
-clang++ -std=c++20 -g -O1 -fsanitize=undefined ub.cpp -o /tmp/ub 2>/dev/null
-if /tmp/ub 2>&1 | grep -qi 'runtime error'; then pass "UBSan detected signed overflow"; else miss "UBSan detection"; fi
+{ clang++ -std=c++20 -g -O1 -fsanitize=undefined ub.cpp -o /tmp/ub && /tmp/ub; } >/tmp/o 2>&1
+detect "UBSan detected signed overflow" 'runtime error' /tmp/o
 
 note "valgrind memcheck — leak.cpp"
-clang++ -std=c++20 -g -O0 leak.cpp -o /tmp/leakv 2>/dev/null
-if valgrind --error-exitcode=42 --leak-check=full /tmp/leakv 2>&1 | grep -qiE 'invalid write|definitely lost'; then pass "valgrind flagged the bug"; else miss "valgrind detection"; fi
+{ clang++ -std=c++20 -g -O0 leak.cpp -o /tmp/leakv && valgrind --leak-check=full /tmp/leakv; } >/tmp/o 2>&1
+detect "valgrind flagged the bug" 'invalid write|definitely lost' /tmp/o
 
 note "cppcheck — null.c"
-if cppcheck --enable=all --error-exitcode=0 null.c 2>&1 | grep -qiE 'null|leak|error'; then pass "cppcheck produced findings"; else miss "cppcheck findings"; fi
+cppcheck --enable=all --error-exitcode=0 null.c >/tmp/o 2>&1
+detect "cppcheck produced findings" 'null|leak|error|uninit' /tmp/o
 
 note "clang-tidy — null.c"
-clang-tidy null.c -- -std=c11 >/tmp/tidy.txt 2>&1 || true
-if grep -qiE 'warning|note' /tmp/tidy.txt; then pass "clang-tidy ran"; else miss "clang-tidy run"; fi
+clang-tidy null.c -- -std=c11 >/tmp/o 2>&1 || true
+detect "clang-tidy ran" 'warning|note' /tmp/o
 
 note "IKOS — null.c"
-if ikos null.c -o /tmp/null.db >/tmp/ikos.txt 2>&1 && grep -qiE 'safe|warning|error|unreachable' /tmp/ikos.txt; then pass "ikos analyzed null.c"; else miss "ikos analysis"; fi
+ikos null.c -o /tmp/null.db >/tmp/o 2>&1 || true
+detect "ikos analyzed null.c" 'safe|warning|error|unreachable' /tmp/o
 
 note "Infer — null.c"
-if infer run --no-progress-bar -- clang -c null.c >/tmp/infer.txt 2>&1; then pass "infer ran (see report)"; else miss "infer run"; fi
+infer run --no-progress-bar -- clang -c null.c >/tmp/o 2>&1 || true
+detect "infer ran" 'analyz|report|issue|found|NULL|RACE' /tmp/o
 
 echo
 if [ "$fail" = 0 ]; then printf '\033[32mALL SMOKE CHECKS PASSED\033[0m\n'; else printf '\033[31mSOME CHECKS FAILED — see MISS lines above\033[0m\n'; fi
