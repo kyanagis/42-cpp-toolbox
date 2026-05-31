@@ -2,6 +2,12 @@
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 
+# radare2 official: https://www.radare.org/
+# radare2 repo: https://github.com/radareorg/radare2
+# radare2 install: https://github.com/radareorg/radare2#install
+# radare2 book: https://book.rada.re/
+# radare2 from source: https://book.rada.re/first_steps/installation.html
+
 RADARE2_VERSION="${RADARE2_VERSION:-6.1.4}"
 SRC=/tmp/radare2
 
