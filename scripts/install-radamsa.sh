@@ -2,6 +2,10 @@
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 
+# radamsa official repo: https://gitlab.com/akihe/radamsa
+# radamsa build/usage: https://gitlab.com/akihe/radamsa#radamsa
+# radamsa GitHub mirror: https://github.com/aoh/radamsa
+
 RADAMSA_VERSION="${RADAMSA_VERSION:-v0.7}"
 PREFIX="${RADAMSA_PREFIX:-/opt/radamsa}"
 SRC=/tmp/radamsa
