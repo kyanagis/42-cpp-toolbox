@@ -62,7 +62,11 @@ detect "clang-tidy ran" 'warning|note' /tmp/o
 
 note "IKOS — null.c"
 ikos null.c -o /tmp/null.db >/tmp/o 2>&1 || true
-detect "ikos analyzed null.c" 'safe|warning|error|unreachable' /tmp/o
+if grep -qi 'could not find ikos python module' /tmp/o; then
+  miss "ikos analysis (python module missing)"; tail -4 /tmp/o | sed 's/^/      | /'
+else
+  detect "ikos analyzed null.c" 'safe|warning|unreachable|unsafe|the program is|number of' /tmp/o
+fi
 
 note "Infer — null.c"
 infer run --no-progress-bar -- clang -c null.c >/tmp/o 2>&1 || true
