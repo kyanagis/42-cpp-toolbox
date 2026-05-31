@@ -17,6 +17,10 @@ ARG HONGGFUZZ_VERSION
 ARG RADAMSA_VERSION
 
 # キャッシュマウントでapt再取得を高速化しlists/archivesを層に残さない。https://docs.docker.com/build/cache/optimize/
+# Ubuntu 22.04 (jammy): https://releases.ubuntu.com/22.04/
+# LLVM: https://llvm.org/   Clang: https://clang.llvm.org/
+# GCC: https://gcc.gnu.org/   CMake: https://cmake.org/   Ninja: https://ninja-build.org/
+# Boost: https://www.boost.org/   GMP: https://gmplib.org/   libunwind: https://www.nongnu.org/libunwind/
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
     rm -f /etc/apt/apt.conf.d/docker-clean \
@@ -54,6 +58,24 @@ ENV DEBIAN_FRONTEND=noninteractive \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8
 
+# --- official sites / install guides for the bundled apt tools ---
+# Compilers/build: GCC https://gcc.gnu.org/  Clang/LLVM https://clang.llvm.org/  CMake https://cmake.org/
+# Ninja https://ninja-build.org/  Meson https://mesonbuild.com/  Bear https://github.com/rizsotto/Bear
+# ccache https://ccache.dev/  mold https://github.com/rui314/mold  hyperfine https://github.com/sharkdp/hyperfine
+# Debug/dynamic: GDB https://www.sourceware.org/gdb/  rr https://rr-project.org/  strace https://strace.io/
+# ltrace https://www.ltrace.org/  valgrind https://valgrind.org/  heaptrack https://github.com/KDE/heaptrack
+# gperftools https://github.com/gperftools/gperftools  ElectricFence https://packages.ubuntu.com/jammy/electric-fence
+# DUMA https://duma.sourceforge.net/
+# Static analysis: cppcheck https://cppcheck.sourceforge.io/  IWYU https://include-what-you-use.org/
+# flawfinder https://dwheeler.com/flawfinder/
+# Coverage: lcov https://github.com/linux-test-project/lcov  gcovr https://gcovr.com/  kcov https://github.com/SimonKagstrom/kcov
+# Binary/reverse: patchelf https://github.com/NixOS/patchelf  elfutils https://sourceware.org/elfutils/
+# capstone https://www.capstone-engine.org/  checksec https://github.com/slimm609/checksec.sh
+# Test frameworks: GoogleTest https://google.github.io/googletest/  Catch2 https://github.com/catchorg/Catch2
+# doctest https://github.com/doctest/doctest  Criterion https://github.com/Snaipe/Criterion
+# Extras: pahole/dwarves https://github.com/acmel/dwarves  universal-ctags https://ctags.io/
+# CLI: ripgrep https://github.com/BurntSushi/ripgrep  fd https://github.com/sharkdp/fd  bat https://github.com/sharkdp/bat
+# fzf https://github.com/junegunn/fzf  jq https://jqlang.github.io/jq/  neovim https://neovim.io/  tmux https://github.com/tmux/tmux
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
     rm -f /etc/apt/apt.conf.d/docker-clean \
@@ -83,6 +105,10 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 
 ARG LLVM_MODERN
 # 既定clangは14のまま（ikosが読むLLVM14ビットコード生成のため）。最新側は併存。https://apt.llvm.org/
+# LLVM apt repo: https://apt.llvm.org/
+# clang-tidy: https://clang.llvm.org/extra/clang-tidy/
+# clang-format: https://clang.llvm.org/docs/ClangFormat.html
+# libc++: https://libcxx.llvm.org/
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
     wget -qO /tmp/llvm.sh https://apt.llvm.org/llvm.sh \
@@ -108,6 +134,8 @@ RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 100 \
  && ln -sf "$(command -v batcat)" /usr/local/bin/bat \
  && ln -sf "$(command -v fdfind)" /usr/local/bin/fd
 
+# GoogleTest: https://google.github.io/googletest/
+# GoogleTest CMake quickstart: https://google.github.io/googletest/quickstart-cmake.html
 RUN cmake -S /usr/src/googletest -B /tmp/gtest -DCMAKE_BUILD_TYPE=Release \
  && cmake --build /tmp/gtest -j"$(nproc)" \
  && cmake --install /tmp/gtest \
@@ -126,12 +154,21 @@ COPY --from=builder /opt/honggfuzz   /opt/honggfuzz
 COPY scripts/lib.sh scripts/install-infer.sh /tmp/scripts/
 RUN chmod +x /tmp/scripts/install-infer.sh && /tmp/scripts/install-infer.sh
 
+# pip-installed tools:
+# CodeChecker https://github.com/Ericsson/codechecker  semgrep https://semgrep.dev/
+# cpplint https://github.com/cpplint/cpplint  compiledb https://github.com/nickdiego/compiledb
+# lizard https://github.com/terryyin/lizard  pwntools https://docs.pwntools.com/
+# ROPgadget https://github.com/JonathanSalwan/ROPgadget  capstone https://www.capstone-engine.org/
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip3 install --upgrade pip wheel \
  && pip3 install \
       codechecker semgrep cpplint compiledb lizard \
       pwntools ROPgadget capstone
 
+# gdb front-ends:
+# GEF https://hugsy.github.io/gef/  (repo https://github.com/hugsy/gef)
+# pwndbg https://github.com/pwndbg/pwndbg
+# PEDA https://github.com/longld/peda
 ARG PWNDBG_VERSION
 RUN mkdir -p /opt/gef \
  && wget -qO /opt/gef/gef.py https://raw.githubusercontent.com/hugsy/gef/main/gef.py \
@@ -144,6 +181,9 @@ COPY config/gdb-gef config/gdb-pwndbg config/gdb-peda /usr/local/bin/
 RUN chmod +x /usr/local/bin/gdb-gef /usr/local/bin/gdb-pwndbg /usr/local/bin/gdb-peda
 
 # Frama-Cはuniverse由来でビルド環境差を吸収するためベストエフォート。https://frama-c.com/
+# Frama-C official: https://frama-c.com/
+# Frama-C install: https://git.frama-c.com/pub/frama-c/-/blob/master/INSTALL.md
+# Frama-C EVA plugin: https://frama-c.com/fc-plugins/eva.html
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
     rm -f /etc/apt/apt.conf.d/docker-clean \
