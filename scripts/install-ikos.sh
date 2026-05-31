@@ -2,6 +2,12 @@
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 
+# IKOS official: https://github.com/NASA-SW-VnV/ikos
+# IKOS install guide (Ubuntu): https://github.com/NASA-SW-VnV/ikos/blob/master/doc/install/UBUNTU.md
+# IKOS dependencies: https://github.com/NASA-SW-VnV/ikos#dependencies
+# IKOS analyzer docs: https://github.com/NASA-SW-VnV/ikos/blob/master/analyzer/README.md
+# NASA Software V&V: https://github.com/NASA-SW-VnV
+
 IKOS_VERSION="${IKOS_VERSION:-v3.5}"
 PREFIX="${IKOS_PREFIX:-/opt/ikos}"
 SRC=/tmp/ikos
