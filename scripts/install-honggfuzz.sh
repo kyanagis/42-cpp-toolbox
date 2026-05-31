@@ -2,6 +2,11 @@
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 
+# honggfuzz official: https://honggfuzz.dev/
+# honggfuzz repo: https://github.com/google/honggfuzz
+# honggfuzz usage: https://github.com/google/honggfuzz/blob/master/docs/USAGE.md
+# honggfuzz build deps: https://github.com/google/honggfuzz#requirements
+
 HONGGFUZZ_VERSION="${HONGGFUZZ_VERSION:-2.6}"
 PREFIX="${HONGGFUZZ_PREFIX:-/opt/honggfuzz}"
 SRC=/tmp/honggfuzz
